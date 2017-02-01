@@ -2,11 +2,11 @@
 <html>
 <head>
     <title></title>
-	<meta charset="utf-8" />
+    <meta charset="utf-8" />
     <script src="Scripts/jquery-3.1.1.min.js"></script>
     <script type="text/javascript">
         function initialize() {
-            $("#results").append("Initializing... ");
+            $("#results").append("<li>Initializing...</li>");
             $.ajax({
                 url: "http://localhost:5403/api/paygate",
                 method: "GET",
@@ -16,16 +16,32 @@
         }
 
         function success(data) {
-            $("#results").append(data);
+            $("#results").append("<li>Request retrieved</li>");
+            $("#PAY_REQUEST_ID").val(data.PAY_REQUEST_ID);
+            $("#CHECKSUM").val(data.CHECKSUM);
+            $("#results").append("<li>Redirecting...</li>");
+            $("#REDIRECT").click();
         }
 
         function error(data, status, error) {
-            $("#results").append("error");
+            $("#results").append("<li>Error!</li>");
         }
     </script>
+    <style>
+        .hidden {
+            display: none;
+        }
+    </style>
 </head>
 <body>
     <button onclick="initialize()">Initialize</button>
-    <p id="results"></p>
+    <ul id="results"></ul>
+    <div class="hidden">
+        <form action="https://secure.paygate.co.za/payweb3/process.trans" method="POST">
+            <input id="PAY_REQUEST_ID" name="PAY_REQUEST_ID" type="hidden" />
+            <input id="CHECKSUM" name="CHECKSUM" type="hidden" />
+            <input id="REDIRECT" type="submit" />
+        </form>
+    </div>
 </body>
 </html>
