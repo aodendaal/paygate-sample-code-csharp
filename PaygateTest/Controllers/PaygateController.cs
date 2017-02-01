@@ -25,7 +25,7 @@
             request.Add("CURRENCY", "ZAR");
             request.Add("RETURN_URL", "https://www.paygate.co.za/thankyou");
             request.Add("TRANSACTION_DATE", "2016-03-10 10:49:16");
-            request.Add("LOCALE", "en");
+            request.Add("LOCALE", "en-za");
             request.Add("COUNTRY", "ZAF");
             request.Add("EMAIL", "customer@paygate.co.za");
 
@@ -33,7 +33,7 @@
 
             var requestString = ToUrlEncodedString(request);
 
-            var content = new StringContent(requestString);
+            var content = new StringContent(requestString, Encoding.UTF8, "application/x-www-form-urlencoded");
 
             var response = await client.PostAsync("https://secure.paygate.co.za/payweb3/initiate.trans", content);
 
@@ -49,6 +49,11 @@
             return Ok(results);
         }
 
+        public IHttpActionResult PostResult([FromBody]string body)
+        {
+            return Ok(body);
+        }
+
         private string ToUrlEncodedString(Dictionary<string, string> request)
         {
             var builder = new StringBuilder();
@@ -58,8 +63,8 @@
                 builder.Append("&");
                 builder.Append(key);
                 builder.Append("=");
-                builder.Append(request[key]);
-                //builder.Append(HttpUtility.UrlEncode(request[key]));
+                //builder.Append(request[key]);
+                builder.Append(HttpUtility.UrlEncode(request[key]));
             }
 
             var result = builder.ToString().TrimStart('&');
