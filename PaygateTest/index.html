@@ -1,0 +1,31 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+	<meta charset="utf-8" />
+    <script src="Scripts/jquery-3.1.1.min.js"></script>
+    <script type="text/javascript">
+        function initialize() {
+            $("#results").append("Initializing... ");
+            $.ajax({
+                url: "http://localhost:5403/api/paygate",
+                method: "GET",
+                success: success,
+                error: error
+            });
+        }
+
+        function success(data) {
+            $("#results").append(data);
+        }
+
+        function error(data, status, error) {
+            $("#results").append("error");
+        }
+    </script>
+</head>
+<body>
+    <button onclick="initialize()">Initialize</button>
+    <p id="results"></p>
+</body>
+</html>
