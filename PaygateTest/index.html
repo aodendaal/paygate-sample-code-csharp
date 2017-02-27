@@ -3,28 +3,36 @@
 <head>
     <title></title>
     <meta charset="utf-8" />
-    <script src="Scripts/jquery-3.1.1.min.js"></script>
     <script type="text/javascript">
         function initialize() {
-            $("#results").append("<li>Initializing...</li>");
-            $.ajax({
-                url: "http://localhost:5403/api/paygate",
-                method: "GET",
-                success: success,
-                error: error
-            });
+            let node = document.createElement("li");
+            node.innerText = "Initializing...";
+            document.querySelector("#results").appendChild(node);
+
+            fetch(`${window.location.protocol}//${location.host}/api/paygate`)
+                .then(data => success(data))
+                .catch(data => error(data));
         }
 
         function success(data) {
-            $("#results").append("<li>Request retrieved</li>");
+            let requestNode = document.createElement("li");
+            requestNode.innerText = "Request retrieved";
+            document.querySelector("#results").appendChild(requestNode);
+            
             $("#PAY_REQUEST_ID").val(data.PAY_REQUEST_ID);
             $("#CHECKSUM").val(data.CHECKSUM);
-            $("#results").append("<li>Redirecting...</li>");
-            $("#REDIRECT").click();
+
+            let redirectNode = document.createElement("li");
+            redirectNode.innerText = "Redirecting...";
+            document.querySelector("#results").appendChild(redirectNode);
+
+            document.querySelector("#REDIRECT").click();
         }
 
-        function error(data, status, error) {
-            $("#results").append("<li>Error!</li>");
+        function error(data) {
+            let node = document.createElement("li");
+            node.innerText = data;
+            document.querySelector("#results").appendChild(node);
         }
     </script>
     <style>

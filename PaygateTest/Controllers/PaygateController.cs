@@ -9,13 +9,14 @@
     using System.Threading.Tasks;
     using System.Web;
     using System.Web.Http;
+    using Data;
+    using Models;
 
     public class PaygateController : ApiController
     {
-        /// <summary>
-        /// Initiates the Paygate Payweb request
-        /// </summary>
-        /// <returns>Dictionary of values from Paygate</returns>
+        private string paygateId = "10011072130";
+        private string paygateKey = "secret";
+
         [HttpGet]
         public async Task<IHttpActionResult> GetRequest()
         {
@@ -23,17 +24,17 @@
 
             var request = new Dictionary<string, string>();
 
-            request.Add("PAYGATE_ID", "10011072130");
+            request.Add("PAYGATE_ID", paygateId);
             request.Add("REFERENCE", "AppFactory Ransom");
             request.Add("AMOUNT", "100000000");
             request.Add("CURRENCY", "ZAR");
-            request.Add("RETURN_URL", "http://localhost:5403/api/paygate");
-            request.Add("TRANSACTION_DATE", "2017-02-01 11:45:16");
+            request.Add("RETURN_URL", $"{Request.RequestUri.Scheme}://{Request.RequestUri.Authority}/api/paygate");
+            request.Add("TRANSACTION_DATE", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
             request.Add("LOCALE", "en-za");
             request.Add("COUNTRY", "ZAF");
             request.Add("EMAIL", "v-anoden@microsoft.com");
 
-            request.Add("CHECKSUM", GetMd5Hash(request, "secret"));
+            request.Add("CHECKSUM", GetMd5Hash(request, paygateKey));
 
             var requestString = ToUrlEncodedString(request);
 
@@ -50,19 +51,70 @@
                 return InternalServerError(new Exception(results["ERROR"]));
             }
 
-            if (!VerifyMd5Hash(results, "secret", results["CHECKSUM"]))
+            if (!VerifyMd5Hash(results, paygateKey, results["CHECKSUM"]))
             {
                 return InternalServerError(new Exception("MD5 verification failed"));
-            }            
+            }
+
+            AddTransaction(request, results["PAY_REQUEST_ID"]);
 
             return Ok(results);
         }
 
         [HttpPost]
-        public IHttpActionResult PostApprove()
+        public async Task<IHttpActionResult> PostPayment()
         {
-            return Redirect("http://localhost:5403/thankyou.html");
+            var responseContent = await Request.Content.ReadAsStringAsync();
+
+            var results = ToDictionary(responseContent);
+
+            var transaction = GetTransaction(results["PAY_REQUEST_ID"]);
+
+            if (transaction == null)
+            {
+                return Redirect($"{Request.RequestUri.Scheme}://{Request.RequestUri.Authority}/finished.html?id=-2");
+            }
+
+            results.Add("REFERENCE", transaction.Reference);
+            results.Add("PAYGATE_ID", paygateId);
+            if (!VerifyMd5Hash(results, paygateKey, results["CHECKSUM"]))
+            {
+                return Redirect($"{Request.RequestUri.Scheme}://{Request.RequestUri.Authority}/finished.html?id=-1");
+            }
+
+            return Redirect($"{Request.RequestUri.Scheme}://{Request.RequestUri.Authority}/finished.html?id={results["TRANSACTION_STATUS"]}");
         }
+
+        #region Database
+
+        private void AddTransaction(Dictionary<string, string> request, string payRequestId)
+        {
+            var db = new TestContext();
+
+            var transaction = new Transaction
+            {
+                TransactionDate = DateTime.Now,
+                PayRequestId = payRequestId,
+                Reference = request["REFERENCE"],
+                Amount = int.Parse(request["AMOUNT"]),
+                EmailAddress = request["EMAIL"]
+            };
+
+            db.Transactions.Add(transaction);
+
+            db.SaveChanges();
+        }
+
+        private Transaction GetTransaction(string payRequestId)
+        {
+            var db = new TestContext();
+
+            var transaction = db.Transactions.FirstOrDefault(record => record.PayRequestId == payRequestId);
+
+            return transaction;
+        }
+
+        #endregion Database
 
         #region Encoding/Decoding
 
@@ -152,7 +204,6 @@
             {
                 return false;
             }
-
         }
 
         #endregion MD5 Hashing

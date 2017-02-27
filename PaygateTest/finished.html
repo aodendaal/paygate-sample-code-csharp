@@ -1,0 +1,45 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <meta charset="utf-8" />
+</head>
+
+<body>
+    <p>Thank you for your purchase!</p>
+    <p>Status: <span id="status" /></p>
+
+    <script type="text/javascript">
+
+        let parameters = getParameters();
+
+        let status = "Unknown";
+        switch (parameters.id) {
+            case "-2": status = "Unable to reconsile transaction"; break;
+            case "-1": status = "Checksum Error"; break;
+            case "0": status = "Not Done"; break;
+            case "1": status = "Approved"; break;
+            case "2": status = "Declined"; break;
+            case "3": status = "Cancelled"; break;
+            case "4": status = "User Cancelled"; break;
+            default: status = `Unknown Status (${parameters.id})`; break;
+        }
+
+        document.querySelector("#status").innerText = status;
+
+
+        function getParameters() {
+            let parameters = window.location.search.substring(1).split('&');
+
+            let results = {}
+
+            for (let i = 0; i < parameters.length; i++) {
+                let [name, value] = parameters[i].split('=');
+                results[name] = value;
+            }
+
+            return results;
+        }
+    </script>
+</body>
+</html>
