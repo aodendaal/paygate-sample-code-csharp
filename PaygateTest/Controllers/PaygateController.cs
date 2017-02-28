@@ -75,9 +75,14 @@
                 return Redirect($"{Request.RequestUri.Scheme}://{Request.RequestUri.Authority}/finished.html?id=-2");
             }
 
-            results.Add("REFERENCE", transaction.Reference);
-            results.Add("PAYGATE_ID", paygateId);
-            if (!VerifyMd5Hash(results, paygateKey, results["CHECKSUM"]))
+            // Reorder attributes for MD5 check
+            var validationSet = new Dictionary<string, string>();
+            validationSet.Add("PAYGATE_ID", paygateId);
+            validationSet.Add("PAY_REQUEST_ID", results["PAY_REQUEST_ID"]);
+            validationSet.Add("TRANSACTION_STATUS", results["TRANSACTION_STATUS"]);
+            validationSet.Add("REFERENCE", transaction.Reference);
+
+            if (!VerifyMd5Hash(validationSet, paygateKey, results["CHECKSUM"]))
             {
                 return Redirect($"{Request.RequestUri.Scheme}://{Request.RequestUri.Authority}/finished.html?id=-1");
             }
